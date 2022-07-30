@@ -38,7 +38,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         .defaultSuccessUrl("/home")
                 )
                 // /logout          POST    302 重定向到-/login?logout 注销
-                .logout();
+                .logout()
+                .and()
+//                .exceptionHandling(handling -> handling
+//                                .accessDeniedPage("/403"));
+                .exceptionHandling(handling -> handling
+                        .accessDeniedHandler((httpServletRequest, httpServletResponse, e) -> {
+//                            httpServletResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
+//                            httpServletRequest.setAttribute(WebAttributes.ACCESS_DENIED_403, e);
+                            httpServletRequest.setAttribute("message", "抱歉! 您无法访问这个资源!");
+                            httpServletRequest.getRequestDispatcher("/403").forward(httpServletRequest, httpServletResponse);
+                        }));
     }
 
     @Bean
