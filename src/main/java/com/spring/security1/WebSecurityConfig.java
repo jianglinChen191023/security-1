@@ -1,20 +1,47 @@
 package com.spring.security1;
 
+import com.spring.security1.config.MyUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Autowired
+    DataSource dataSource;
+
+    @Autowired
+    MyUserDetailsService myUserDetailsService;
+
+    /**
+     * 建立BCryptPasswordEncoder的bean
+     * <p>
+     * 获取方法:
+     *
+     * @return
+     * @Autowired private PasswordEncoder passwordEncoder;
+     * </p>
+     */
+    @Bean
+    public PasswordEncoder create() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        jdbcTokenRepository.setDataSource(dataSource);
+
         http
                 // 对请求进行授权
                 .authorizeRequests(authorize -> authorize
@@ -52,26 +79,26 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 })
                 .and()
                 /* 记住我 */
-                .rememberMe();
-//;
+                .rememberMe(rememberMeConfigurer -> rememberMeConfigurer
+                        .tokenRepository(jdbcTokenRepository));
     }
 
-    @Bean
-    @Override
-    public UserDetailsService userDetailsService() {
-        User.UserBuilder users = User.withDefaultPasswordEncoder();
-        UserDetails user = users
-                .username("user")
-                .password("password")
-                .roles("USER")
-                .build();
-        UserDetails admin = users
-                .username("admin")
-                .password("password")
-                .roles("ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(user, admin);
-    }
+//    @Bean
+//    @Override
+//    public UserDetailsService userDetailsService() {
+//        User.UserBuilder users = User.withDefaultPasswordEncoder();
+//        UserDetails user = users
+//                .username("user")
+//                .password("password")
+//                .roles("USER")
+//                .build();
+//        UserDetails admin = users
+//                .username("admin")
+//                .password("password")
+//                .roles("ADMIN")
+//                .build();
+//
+//        return new InMemoryUserDetailsManager(user, admin);
+//    }
 
 }
